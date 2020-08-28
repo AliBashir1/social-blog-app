@@ -20,4 +20,6 @@ app.set('view engine', 'ejs')
 // homepage
 app.use('/', router)
 
-app.listen(3000)
+
+// exporting app
+module.exports = app
