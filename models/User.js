@@ -1,7 +1,8 @@
 // import 
 const validators = require('validator')
+const bcrypt = require('bcryptjs')
 // importing users collection from mongodb
-const userCollection = require('../db').collection('users')
+const userCollection = require('../db').db().collection('users')
 
 // Constructor function 
 let User = function(data){
@@ -11,7 +12,6 @@ let User = function(data){
 // registration cleaning
 User.prototype.cleanUp = function () {
 
-    console.log(this.data)
     if (typeof(this.data.username ) != "string" ){this.data.username=""}
     if (typeof(this.data.email ) != "string"){this.data.email=""}
     if (typeof(this.data.password ) != "string"){this.data.password=""}
@@ -22,13 +22,12 @@ User.prototype.cleanUp = function () {
         email: this.data.email.trim().toLowerCase(),
         password: this.data.password
     }
-    console.log(this.data)
+
 }
 
 // registration validator
 User.prototype.validate = function(){
 
-    console.log(this.data.username.length)
    
     // username
     if (this.data.username == ""){this.errors.push("You must provide username.")}
@@ -53,27 +52,51 @@ User.prototype.register = function(){
     this.validate()
     // 2. if no error save data into database
     if (!this.errors.length){
+
+        // hash user password
+        let salt = bcrypt.genSaltSync(10)
+        this.data.password = bcrypt.hashSync(this.data.password, salt)
         // save into database
         userCollection.insertOne(this.data)
     }
-    
 
 }   
+/**
+ * 
+ * 
+ * 
+ */
 // login
-User.prototype.login = function(callback){
-    // check for values 
-    this.cleanUp()
+User.prototype.login = function(){
+    // returns a promise 
+    return new Promise((resolve, reject)=>{
+        // check for values 
+        this.cleanUp()
+        /**
+         * Majority of the mongoDB returns a promise. you can use then and catch here 
+        * .then() if promise is resolve  -- define a function for what to do if promise resolved
+        * .catch() if promise is reject  -- define a function if promise reject
+         */
+        userCollection.findOne({username: this.data.username}).then((attemptedUser)=>{
 
-    userCollection.findOne({username: this.data.username}, (err, attemptedUser)=>{
-        // attemptedUser will have the user if it exits in database
-        if (attemptedUser && attemptedUser.password == this.data.password){
-            callback("Congrats!")
+            // bcrypt.compareSync will compare password and
+            // attemptedUser is the user which itll find in database
+            if (attemptedUser && bcrypt.compareSync(this.data.password, attemptedUser.password)){
+                resolve("Congrats!")
 
-        } else {
-            callback("Invalid username / password")
-        }
+            } else {
+                reject("Invalid username / password")
+            }
+            // handle databse error 
+        }).catch((err)=>{
+            console.log(this.data.username)
+            console.log(this.data.password)
+            reject("Please try again") 
+
+        })
+
     })
 
-
 }
+
 module.exports = User
