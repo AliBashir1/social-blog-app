@@ -9,6 +9,7 @@ let User = function(data){
     this.data = data
     this.errors = []
 }
+
 // registration cleaning
 User.prototype.cleanUp = function () {
 
@@ -77,7 +78,7 @@ User.prototype.login = function(){
         * .then() if promise is resolve  -- define a function for what to do if promise resolved
         * .catch() if promise is reject  -- define a function if promise reject
          */
-        userCollection.findOne({username: this.data.username}).then((attemptedUser)=>{
+        userCollection.findOne({username: this.data.username}).then((attemptedUser)=>{ 
 
             // bcrypt.compareSync will compare password and
             // attemptedUser is the user which itll find in database
@@ -89,8 +90,6 @@ User.prototype.login = function(){
             }
             // handle databse error 
         }).catch((err)=>{
-            console.log(this.data.username)
-            console.log(this.data.password)
             reject("Please try again") 
 
         })

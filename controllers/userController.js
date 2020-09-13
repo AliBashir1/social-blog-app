@@ -16,17 +16,29 @@ exports.login = function(req, res){
     user.login().then( (result) => {
         // after setting up session in app.js session object will be available hre
         // add user property in session as an object -- you can use session anywhere in
+
         req.session.user = {
             favColor:"Royal Blue", 
             username: user.data.username
             }
-        res.send(result)
-    }).catch( (e)=>res.send(e))
+        //  session does automatic saving for you .. you can override it so you can redirect user to logged in homepage once session done saving
+        // remember you need session to be saved in database so user ker find proper homepage 
+        req.session.save(()=> res.redirect('/'))
+    }).catch( (e)=> {
+        req.flash('errors', e)
+        // manually saving session to store error messages in it
+        // this is a way of creating session 
+        req.session.save(() => res.redirect('/' ))
+    })
 
 
 }
 
-exports.logout = function(){
+exports.logout = function(req,  res){
+    // this will destroy the session -- delete session from mongodb
+    // reason you need callback function here because you need to wait for session to be deleted from mongodb so it can redirect to appropiate homepage
+    req.session.destroy(()=> res.redirect('/'))
+
     
 }
 
@@ -45,8 +57,10 @@ exports.register = (req, res)=>{
 exports.home = (req, res)=>{
 
     if (req.session.user){
-        res.send("You are logged in ..")
+        // pass the object into home-dashboard -- username will be available in mentioned template
+        res.render('home-dashboard', {username: req.session.user.username})
     } else {
-        res.render('home-guest')
+        // red.flash will remove the flash message 
+        res.render('home-guest', {errors: req.flash('errors')})
     }
 }
