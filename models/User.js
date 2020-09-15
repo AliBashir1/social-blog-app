@@ -26,46 +26,75 @@ User.prototype.cleanUp = function () {
 
 }
 
-// registration validator
-User.prototype.validate = function(){
+// registration validator 
+// this validate function is async -- because of mongodob findOne method 
+User.prototype.validate =  function () {
+    return new Promise(async (resolve, reject) => {
 
    
-    // username
-    if (this.data.username == ""){this.errors.push("You must provide username.")}
-    if (this.data.username.length > 0 && this.data.username.length < 3){this.errors.push("Username must be 3 characters long.")}
-    if (this.data.username != "" && !validators.isAlphanumeric(this.data.username)) {this.errors.push("Username can only be alphabets and letters.")}
-    if (this.data.username.length > 30 ){this.errors.push("Username cannot exceed 30 characters.")}
+        // username
+        if (this.data.username == ""){this.errors.push("You must provide username.")}
+        if (this.data.username.length > 0 && this.data.username.length < 3){this.errors.push("Username must be 3 characters long.")}
+        if (this.data.username != "" && !validators.isAlphanumeric(this.data.username)) {this.errors.push("Username can only be alphabets and letters.")}
+        if (this.data.username.length > 30 ){this.errors.push("Username cannot exceed 30 characters.")}
+        
+        // email
+        if (!validators.isEmail(this.data.email)) {this.errors.push("Email is not valid.")}
+        
+        // password
+        if (this.data.password == ""){this.errors.push("You must provide password.")}
+        if (this.data.password.length > 0 && this.data.password.length < 12){this.errors.push("Password must be 12 characters long.")}
+        if (this.data.username.length > 100 ){this.errors.push("Username cannot exceed 100 characters.")}
+        
+        // check if username is unique
+        if (this.data.username.length > 2 && this.data.username.length < 31 && validators.isAlphanumeric(this.data.username)){
+            /* mongodb userCollection returns a promise either reject as null or resolve with username value.
+             since this method will take time to find username we have to make sure that method execute first before heading to next line which depends on it.
     
-    // email
-    if (!validators.isEmail(this.data.email)) {this.errors.push("Email is not valid.")}
     
-    // password
-    if (this.data.password == ""){this.errors.push("You must provide password.")}
-    if (this.data.password.length > 0 && this.data.password.length < 12){this.errors.push("Password must be 12 characters long.")}
-    if (this.data.username.length > 100 ){this.errors.push("Username cannot exceed 100 characters.")}
+             */
+            
+            let usernameExists =  await userCollection.findOne({username: this.data.username})
+            if (usernameExists) {this.errors.push("That username is already taken.")}
+        }
+        
+        // check if email is unique
+        if ( validators.isEmail(this.data.email)){
+     
+            let emailExists =  await userCollection.findOne({email: this.data.email})
+            if (emailExists) {this.errors.push("That email is already exists.")}
 
+        }
+        resolve()
+    }) // end of promise 
 }
 
 // registration 
-User.prototype.register = function(){
-    // 1. validate data
-    this.cleanUp()
-    this.validate()
-    // 2. if no error save data into database
-    if (!this.errors.length){
-
-        // hash user password
-        let salt = bcrypt.genSaltSync(10)
-        this.data.password = bcrypt.hashSync(this.data.password, salt)
-        // save into database
-        userCollection.insertOne(this.data)
-    }
-
-}   
+User.prototype.register =  function(){
+    return new Promise(async (resolve, reject)=>{
+        // 1. validate data
+        this.cleanUp()
+        // since validate is asncy you need to make sure this execute firsts 
+        await this.validate()
+        // 2. if no error save data into database
+        if (!this.errors.length){
+    
+            // hash user password
+            let salt = bcrypt.genSaltSync(10)
+            this.data.password = bcrypt.hashSync(this.data.password, salt)
+            // save into database
+            await userCollection.insertOne(this.data)
+            resolve()
+        } else {
+            reject(this.errors)
+        }
+    
+    }) // end of promise
+}
 /**
  * 
  * 
- * 
+ *
  */
 // login
 User.prototype.login = function(){

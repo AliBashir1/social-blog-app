@@ -16,6 +16,8 @@ let app = express()
 let sessionOptions = session({
     secret: "whats going on",
     store: new MongoStore({client: require('./db')}),
+    resave: false,
+    saveUninitialized: false,
 
     // mongo db uses memory to store session - here it will override the store option
     // you have to make sure that 

@@ -27,7 +27,7 @@ exports.login = function(req, res){
     }).catch( (e)=> {
         req.flash('errors', e)
         // manually saving session to store error messages in it
-        // this is a way of creating session 
+        // this is a way of creating session manually
         req.session.save(() => res.redirect('/' ))
     })
 
@@ -44,14 +44,21 @@ exports.logout = function(req,  res){
 
 exports.register = (req, res)=>{
     let user = new User(req.body)
-    user.register()
+    user.register().then(()=>{
+        req.session.user = {username: user.data.username}
+        req.session.save(()=>{
+            res.redirect('/')
+        })
+    }).catch((regErrors)=>{
+        regErrors.forEach((error)=>{
+            req.flash('regErrors', error)  
+            })
+            req.session.save(()=>{
+                res.redirect('/')
+        })
+    })
     // if there is any error in errors list
-    if (user.errors.length){
-        res.send(user.errors)
-
-    } else {
-        res.send("no errors ")
-    }
+    
 }
 // homepage
 exports.home = (req, res)=>{
@@ -61,6 +68,8 @@ exports.home = (req, res)=>{
         res.render('home-dashboard', {username: req.session.user.username})
     } else {
         // red.flash will remove the flash message 
-        res.render('home-guest', {errors: req.flash('errors')})
+        res.render('home-guest', {  errors: req.flash('errors'), 
+                                    regErrors: req.flash('regErrors')
+                                })
     }
 }
