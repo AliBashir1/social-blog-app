@@ -4,6 +4,12 @@ const bcrypt = require('bcryptjs')
 // importing users collection from mongodb
 const userCollection = require('../db').db().collection('users')
 
+// gvatar md5 
+const md5 = require('md5')
+
+// import gvatar 
+
+
 // Constructor function 
 let User = function(data){
     this.data = data
@@ -84,6 +90,8 @@ User.prototype.register =  function(){
             this.data.password = bcrypt.hashSync(this.data.password, salt)
             // save into database
             await userCollection.insertOne(this.data)
+              // populate avatar (this will set avatar value in memory instead of saving into database)
+            this.getAvatar()
             resolve()
         } else {
             reject(this.errors)
@@ -112,6 +120,11 @@ User.prototype.login = function(){
             // bcrypt.compareSync will compare password and
             // attemptedUser is the user which itll find in database
             if (attemptedUser && bcrypt.compareSync(this.data.password, attemptedUser.password)){
+                // since logging in session dont have access to user email -
+                this.data = attemptedUser
+                // populate avatar 
+    
+                this.getAvatar()
                 resolve("Congrats!")
 
             } else {
@@ -126,5 +139,7 @@ User.prototype.login = function(){
     })
 
 }
-
+User.prototype.getAvatar = function (){
+    this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}?s=128`
+}
 module.exports = User

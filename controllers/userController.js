@@ -18,7 +18,7 @@ exports.login = function(req, res){
         // add user property in session as an object -- you can use session anywhere in
 
         req.session.user = {
-            favColor:"Royal Blue", 
+            avatar: user.avatar, 
             username: user.data.username
             }
         //  session does automatic saving for you .. you can override it so you can redirect user to logged in homepage once session done saving
@@ -65,11 +65,23 @@ exports.home = (req, res)=>{
 
     if (req.session.user){
         // pass the object into home-dashboard -- username will be available in mentioned template
-        res.render('home-dashboard', {username: req.session.user.username})
+        res.render('home-dashboard')
     } else {
         // red.flash will remove the flash message 
         res.render('home-guest', {  errors: req.flash('errors'), 
                                     regErrors: req.flash('regErrors')
                                 })
     }
+}
+
+exports.mustBeLoggedIn = (req, res, next)=>{
+    if (req.session.user){
+        next()
+    } else {
+        req.flash('errors', "you must be logged in to perform this action.")
+        req.session.save(()=>{
+            res.redirect('/')
+        })
+    }
+
 }

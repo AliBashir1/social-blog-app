@@ -33,6 +33,18 @@ let sessionOptions = session({
 app.use(sessionOptions)
 // enable flash
 app.use(flash())
+/**
+ * locals will make "user" object available in ejs templates (view) - app.use make sure to run this function on every request and next() will call next function
+ * as at given url. 
+  all of the ejs template will have acces to user property - means you dont have to pass following anymore
+    {username: req.session.user.username, avatar: req.session.user.avatar} 
+ */
+
+app.use(function(req, res, next){ 
+    res.locals.user = req.session.user
+    next()
+    
+})
 
 // boiler plate code -- this enables access data from html forms
 app.use(express.urlencoded({ extended: false }))
@@ -46,6 +58,8 @@ app.set('views', 'views')
 
 // template engine -- ejs 
 app.set('view engine', 'ejs')
+
+
 
 // router
 app.use('/', router)
