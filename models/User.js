@@ -11,9 +11,11 @@ const md5 = require('md5')
 
 
 // Constructor function 
-let User = function(data){
+let User = function(data, getAvatar){
     this.data = data
     this.errors = []
+    if (getAvatar == undefined){getAvatar = false}
+    if (getAvatar == true){this.getAvatar()}
 }
 
 // registration cleaning
@@ -130,7 +132,7 @@ User.prototype.login = function(){
             } else {
                 reject("Invalid username / password")
             }
-            // handle databse error 
+            // handle database error 
         }).catch((err)=>{
             reject("Please try again") 
 
@@ -139,7 +141,43 @@ User.prototype.login = function(){
     })
 
 }
+
+
 User.prototype.getAvatar = function (){
     this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}?s=128`
 }
+
+
+User.findByUsername = function(username){
+    return new Promise((resolve, reject)=>{
+        if (typeof(username) != "string"){
+            reject() 
+            return
+        }
+        // find matching user document using given username and clean up userDoc 
+        // its better to cleanup user doc you dont want extra information going out of User model
+        userCollection.findOne({username: username}).then((userDoc)=>{
+        // clean up 
+        if (userDoc){
+            userDoc = new User(userDoc, true)
+            userDoc = {
+                _id: userDoc.data._id,
+                username: userDoc.data.username,
+                avatar: userDoc.avatar
+            }
+            resolve(userDoc)
+        }else{
+            reject()
+        }
+
+        }).catch((e)=>{
+            // error is technical error from mongodb - it has nothing to do with user not found --
+            console.log(e)
+            reject()
+        })
+
+    })
+
+}
+
 module.exports = User

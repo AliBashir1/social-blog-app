@@ -19,4 +19,16 @@ router.post('/logout', userController.logout)
 // Post related routes
 // mustbeLoggedIn wil check for if user is logged in or no
 router.get('/create-post',userController.mustBeLoggedIn, postController.viewCreateScreen )
+router.post('/create-post',userController.mustBeLoggedIn, postController.create )
+router.get('/post/:id', postController.viewSingle)
+
+
+// profile related routers
+
+router.get('/profile/:username', userController.ifUserExists, userController.profilePostsScreen)
+
+
+
+
+
 module.exports = router
