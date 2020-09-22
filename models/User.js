@@ -173,7 +173,7 @@ User.findByUsername = function(username){
         }).catch((e)=>{
             // error is technical error from mongodb - it has nothing to do with user not found --
             console.log(e)
-            reject()
+            reject() 
         })
 
     })
