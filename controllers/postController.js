@@ -110,3 +110,11 @@ exports.delete = function(req, res){
     })
 
 }
+
+
+exports.search = function(req, res){
+    // returns results posts if search from Post constructor is resolve or empty list if search rejected()
+    Post.search(req.body.searchTerm).then(posts => {
+        res.json(posts)
+    }).catch(()=> res.json([]))
+}

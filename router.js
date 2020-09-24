@@ -27,8 +27,12 @@ router.post('/post/:id/delete',userController.mustBeLoggedIn, postController.del
 
 
 // profile related routers
-
 router.get('/profile/:username', userController.ifUserExists, userController.profilePostsScreen)
+
+
+// search bar
+
+router.post('/search', postController.search)
 
 
 

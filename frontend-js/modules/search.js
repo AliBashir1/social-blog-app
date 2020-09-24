@@ -1,4 +1,5 @@
 import axios from 'axios'
+import domPurify from 'dompurify'
 export default class Search{
     // 1. select DOM element
     constructor(){
@@ -52,10 +53,17 @@ export default class Search{
     // fetch value from search bar
     let value = this.inputField.value
 
+    if(value == ""){
+      clearTimeout(this.typingWaitTimer)
+      this.hideLoaderIcon()
+      this.hideResultArea()
+    }
+
     if(value != "" && value != this.previousValue){
       clearTimeout(this.typingWaitTimer)
       this.showLoaderIcon()
-      this.typingWaitTimer = setTimeout(() => this.sendRequest(), 3000);
+      this.hideResultArea()
+      this.typingWaitTimer = setTimeout(() => this.sendRequest(), 750);
     }
     this.previousValue = value
 
@@ -63,7 +71,35 @@ export default class Search{
    // axios send a post request to search url
   sendRequest(){
     // data to following url
-    axios.post('/search', {searchTerm: this.inputField.value}).then(()=>{}).catch(()=>{alert("request failed")})
+
+    axios.post('/search', {searchTerm: this.inputField.value}).then(response=>{
+      console.log(response.data)
+      this.renderResultsHTML(response.data )
+    }).catch(()=>{alert("request failed")})
+  }
+
+  renderResultsHTML(posts){
+    if(posts.length){
+      this.resultsArea.innerHTML = domPurify.sanitize(`<div class="list-group shadow-sm">
+        <div class="list-group-item active"><strong>Search Results</strong> ${posts.length > 1 ? `${posts.length} items found!` : "1 item found!"}</div>
+        ${posts.map((post)=>{
+          let postDate = new Date(post.createdDate)
+          return ` <a href="/post/${post._id}" class="list-group-item list-group-item-action">
+          <img class="avatar-tiny" src="${post.author.avatar}"> <strong>${post.title}</strong>
+          <span class="text-muted small">by ${post.author.username} on ${postDate.getMonth() + 1}/${postDate.getDate()}/${postDate.getFullYear()}</span>
+        </a>`
+        }).join()}
+      </div>`)
+    } else{
+      this.resultsArea.innerHTML = `<p class="alert alert-danger text-center shadow-sm"> Sorry , we couldnt find any result.</p>`
+    }
+
+    this.hideLoaderIcon()
+    this.showResultArea()
+  }
+
+  showResultArea(){
+
   }
   
   // make visible loader icon
@@ -71,7 +107,19 @@ export default class Search{
      this.loaderIcon.classList.add("circle-loader--visible")
   }
 
-   // search overlay
+  hideLoaderIcon(){
+    this.loaderIcon.classList.remove("circle-loader--visible")
+  }
+
+  showResultArea(){
+    this.resultsArea.classList.add("live-search-results--visible")
+  }
+  hideResultArea(){
+    this.resultsArea.classList.remove("live-search-results--visible")
+  }
+
+
+  // search overlay
   openOverlay(){
         this.overlay.classList.add("search-overlay--visible")
         // this will wait for 50 miliseconds before running
@@ -98,28 +146,7 @@ export default class Search{
         <div class="search-overlay-bottom">
           <div class="container container--narrow py-3">
             <div class="circle-loader"></div>
-            <div class="live-search-results">
-              <div class="list-group shadow-sm">
-                <div class="list-group-item active"><strong>Search Results</strong> (4 items found)</div>
-    
-                <a href="#" class="list-group-item list-group-item-action">
-                  <img class="avatar-tiny" src="https://gravatar.com/avatar/b9216295c1e3931655bae6574ac0e4c2?s=128"> <strong>Example Post #1</strong>
-                  <span class="text-muted small">by barksalot on 0/14/2019</span>
-                </a>
-                <a href="#" class="list-group-item list-group-item-action">
-                  <img class="avatar-tiny" src="https://gravatar.com/avatar/b9408a09298632b5151200f3449434ef?s=128"> <strong>Example Post #2</strong>
-                  <span class="text-muted small">by brad on 0/12/2019</span>
-                </a>
-                <a href="#" class="list-group-item list-group-item-action">
-                  <img class="avatar-tiny" src="https://gravatar.com/avatar/b9216295c1e3931655bae6574ac0e4c2?s=128"> <strong>Example Post #3</strong>
-                  <span class="text-muted small">by barksalot on 0/14/2019</span>
-                </a>
-                <a href="#" class="list-group-item list-group-item-action">
-                  <img class="avatar-tiny" src="https://gravatar.com/avatar/b9408a09298632b5151200f3449434ef?s=128"> <strong>Example Post #4</strong>
-                  <span class="text-muted small">by brad on 0/12/2019</span>
-                </a>
-              </div>
-            </div>
+            <div class="live-search-results"></div>
           </div>
         </div>
       </div>

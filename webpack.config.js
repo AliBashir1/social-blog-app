@@ -33,5 +33,4 @@ module.exports = {
     dns: 'empty',
     module: 'empty'
   }
-  
 }

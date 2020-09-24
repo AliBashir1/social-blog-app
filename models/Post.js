@@ -192,4 +192,24 @@ Post.delete = function(postIDtoDelete, currentUserID){
     })
 }
 
+Post.search = function(searchTerm){
+    return new Promise(async(resolve, reject)=>{
+
+        // make sure seachTerm is string type
+        if (typeof(searchTerm) == "string"){
+            let posts = await Post.postQueries([
+                {$match : {$text: {$search: searchTerm}}},
+                {$sort: {sort: {$meta: "textScore"}}}
+
+            ])
+            resolve(posts)
+
+        } else {
+            reject()
+        }
+
+
+    })
+}
+
 module.exports = Post
