@@ -30,21 +30,10 @@ let sessionOptions = session({
     }
 })
 
-
 // enable session for express framework 
 app.use(sessionOptions)
 // enable flash
 app.use(flash())
-/**
- * using anonymous function in app.us ensure that this function will execute for every req
- * locals will make "user" object available in ejs templates (view) - app.use make sure to run this function on every request and next() will call next function
- * as at given url. 
-  all of the ejs template will have acces to user property - means you dont have to pass following anymore
-    {username: req.session.user.username, avatar: req.session.user.avatar} 
- */
-
-
-
 
 // boiler plate code -- this enables access data from html forms
 app.use(express.urlencoded({ extended: false }))
@@ -58,6 +47,7 @@ app.set('views', 'views')
 
 // template engine -- ejs 
 app.set('view engine', 'ejs')
+
 app.use(function(req, res, next){ 
     // make mark down available in ejs views --
     res.locals.filterUserHTML = function(content){

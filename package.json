@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "watch": "nodemon db",
+    "watch": "nodemon db --ignore frontend-js --ignore public/ & webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -36,5 +36,6 @@
     "validator": "^13.1.1",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
+    
   }
 }
