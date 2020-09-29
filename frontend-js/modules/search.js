@@ -62,7 +62,7 @@ export default class Search{
     if(value != "" && value != this.previousValue){
       clearTimeout(this.typingWaitTimer)
       this.showLoaderIcon()
-      this.hideResultArea()
+      this.hideResultArea() 
       this.typingWaitTimer = setTimeout(() => this.sendRequest(), 750);
     }
     this.previousValue = value
@@ -71,7 +71,7 @@ export default class Search{
    // axios send a post request to search url
   sendRequest(){
     // data to following url
-
+    console.log(this.inputField.value)
     axios.post('/search', {searchTerm: this.inputField.value}).then(response=>{
       console.log(response.data)
       this.renderResultsHTML(response.data )
@@ -98,9 +98,6 @@ export default class Search{
     this.showResultArea()
   }
 
-  showResultArea(){
-
-  }
   
   // make visible loader icon
   showLoaderIcon(){

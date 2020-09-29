@@ -1,6 +1,8 @@
 // import 
 const User = require('../models/User')
 const Post = require('../models/Post')
+const Follow = require('../models/Follow')
+const { ObjectID } = require('mongodb')
 
 
 exports.login = function(req, res){
@@ -67,11 +69,18 @@ exports.register = (req, res)=>{
     
 }
 // homepage
-exports.home = (req, res)=>{
+exports.home = async (req, res)=>{
 
     if (req.session.user){
+        try { 
+        // fetch feed of post for current user 
+            let posts = await Post.getFeed(req.session.user._id)
+            res.render('home-dashboard', {posts: posts})
+        }catch(error){
+            console.log(error)
+        }
         // pass the object into home-dashboard -- username will be available in mentioned template
-        res.render('home-dashboard')
+        
     } else {
         // red.flash will remove the flash message 
         res.render('home-guest', { regErrors: req.flash('regErrors')
@@ -108,17 +117,90 @@ exports.profilePostsScreen = function(req, res){
      // find post of user whose profile is being viewed
     Post.findByAuthorId(req.profileUser._id).then((posts)=>{
 
-        res.render('profile', {    
+        res.render('profile', {  
+            currentPage: 'posts',  
             profileUsername: req.profileUser.username, 
             profileAvatar: req.profileUser.avatar,
-            posts: posts
+            posts: posts,
+            isFollowing: req.isFollowing,
+            isVisitorProfile: req.isVisitorProfile,
+            counts: {postsCount: req.postsCount, followersCount: req.followersCount, followingCount: req.followingCount}
             }
+
         )
 
     }).catch(()=>{
         res.render('404')
     })
+}
+
+exports.sharedProfileData = async function (req, res, next){
+    // check if user already following
+    let isFollowing = false
+    let isVisitorProfile = false
+
+    if(req.session.user){
+        isVisitorProfile = req.profileUser._id.equals(new ObjectID(req.session.user._id))
+        isFollowing = await Follow.isVisitorFollowing(req.profileUser._id, req.visitorId)
+      
+    }
+    req.isVisitorProfile = isVisitorProfile
+    req.isFollowing = isFollowing
+
+    //retrieve posts, followers and following count
+    let postsCountPromise = Post.countPostsByAuthorId(req.profileUser._id)
+    let followersCountPromise = Follow.countFollowersByAuthorId(req.profileUser._id)
+    let followingCountPromise = Follow.countFollowingByAuthorId(req.profileUser._id)
+
+    let [postsCount, followersCount, followingCount] = await Promise.all([postsCountPromise, followersCountPromise, followingCountPromise])
+
+    req.postsCount = postsCount
+    req.followersCount = followersCount
+    req.followingCount = followingCount
+
+
+    next()
+}
+
+exports.profileFollowersScreen = async function(req, res){
+
+    try { 
+        let followers =   await Follow.getFollowersById(req.profileUser._id)
+        res.render('profile-followers', { 
+                            currentPage: 'followers',
+                            profileUsername: req.profileUser.username, 
+                            profileAvatar: req.profileUser.avatar,
+                            followers: followers,
+                            isFollowing: req.isFollowing,
+                            isVisitorProfile: req.isVisitorProfile,
+                            counts: {postsCount: req.postsCount, followersCount: req.followersCount, followingCount: req.followingCount}
+                        })
+    }catch{
+        res.render('404')
+
+
+    }
+}
+
+exports.profileFollowingScreen = async function(req, res){
+    try {
+        let following = await Follow.getFollowingById(req.profileUser._id)
+        res.render('profile-following', { 
+            currentPage: 'following',
+            profileUsername: req.profileUser.username, 
+            profileAvatar: req.profileUser.avatar,
+            following: following,
+            isFollowing: req.isFollowing,
+            isVisitorProfile: req.isVisitorProfile,
+            counts: {postsCount: req.postsCount, followersCount: req.followersCount, followingCount: req.followingCount}
+        })
+
+    }catch{
+        res.render('404')
+
+    }
+}
+  
 
    
 
-}
