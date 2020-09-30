@@ -67,7 +67,29 @@ app.use(function(req, res, next){
 
 // router
 app.use('/', router)
+// set server so socket io can be used
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
 
+// setup session for socket.io
+io.use(function(socket, next){
+    sessionOptions(socket.request, socket.request.res, next)
+})
 
+// socket is listening to event "connection"
+io.on("connection", (socket)=>{
+    // only if user online
+    if (socket.request.session.user){
+        // fetching user from session
+        let user = socket.request.session.user
+        socket.emit("welcome", {username: user.username, avatar: user.avatar})
+        socket.on("chatMessageFromBrowser", data =>{
+            // message is from frontend javascript(sendMessageToServer)
+            socket.broadcast.emit("chatMessageFromServer", {message: sanitizeHTML(data.message, {allowedTag: [], allowedAttributes:{}}), username: user.username, avatar: user.avatar})
+        } )
+
+    }
+   
+})
 // exporting app
-module.exports = app
+module.exports = server

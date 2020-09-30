@@ -1,11 +1,15 @@
+import domPurify from 'dompurify'
+
 export default class Chat{
 
     constructor(){
         this.openedYet = false
         this.chatWrapper = document.querySelector("#chat-wrapper")
         this.injectHTML()
+        this.chatLog = document.querySelector("#chat")
         this.chatIcon = document.querySelector(".header-chat-icon")
-    
+        this.chatField = document.querySelector("#chatField")
+        this.chatForm = document.querySelector("#chatForm")
 
         
         this.closeChat = document.querySelector(".chat-title-bar-close")
@@ -15,6 +19,10 @@ export default class Chat{
 
     // events
     events(){
+        this.chatForm.addEventListener("submit", (e)=>{
+            e.preventDefault()
+            this.sendMessageToServer()
+        })
         this.chatIcon.addEventListener("click",()=> this.showChat() )
         this.closeChat.addEventListener("click", ()=> this.hideChat() )
 
@@ -23,6 +31,26 @@ export default class Chat{
 
 
     // methods
+    sendMessageToServer(){
+        // emit takes two argument
+        this.socket.emit('chatMessageFromBrowser', {message: this.chatField.value})
+        this.chatLog.insertAdjacentHTML('beforeend', domPurify.sanitize(`
+        <div class="chat-self">
+            <div class="chat-message">
+                <div class="chat-message-inner">
+                    ${this.chatField.value}
+                </div>
+            </div>
+            <img class="chat-avatar avatar-tiny" src="${this.avatar}">
+        </div>
+        `))
+
+        this.chatLog.scrollTop = this.chatLog.scrollHeight
+        // clear the chat field once user hit enter
+        this.chatField.value = ''
+        this.chatField.focus()
+    }
+
 
     showChat(){
         if(!this.openedYet){
@@ -30,6 +58,7 @@ export default class Chat{
         }
         this.openedYet = true
         this.chatWrapper.classList.add("chat--visible")
+        this.chatField.focus()
     }
 
     hideChat(){
@@ -37,7 +66,30 @@ export default class Chat{
     }
 
     openConnection(){
-        alert("opening connection")
+        // io create connection between server and browser
+        this.socket = io()
+        
+        this.socket.on("welcome", data =>{
+            this.username = data.username
+            this.avatar = data.avatar
+        })
+
+        this.socket.on("chatMessageFromServer", data => {
+            this.displayMessageFromServer(data)
+       })
+    }
+    displayMessageFromServer(data){
+        this.chatLog.insertAdjacentHTML('beforeend', domPurify.sanitize(`
+        <div class="chat-other">
+        <a href="/profile/${data.username}"><img class="avatar-tiny" src="${data.avatar}"></a>
+        <div class="chat-message"><div class="chat-message-inner">
+        <a href="/profile/${data.username}"><strong>${data.username}:</strong></a>
+        ${data.message} 
+        </div></div>
+        </div>`)
+        )
+        this.chatLog.scrollTop = this.chatLog.scrollHeight
+
     }
 
 
