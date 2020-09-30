@@ -4,6 +4,7 @@ export default class RegistrationFrom{
 
     constructor(){
 
+        this._csrf = document.querySelector('[name="_csrf"]').value
         this.form = document.querySelector('#registration-form')
         // get all the fields inside id #registration-form
         this.allFields = document.querySelectorAll("#registration-form .form-control")
@@ -75,6 +76,7 @@ export default class RegistrationFrom{
             !this.email.errors &&
             !this.password.errors) 
                 {
+                    console.log("working")
                     this.form.submit()
                                 }
     }
@@ -128,7 +130,7 @@ export default class RegistrationFrom{
         // check if username exists already
         if (!this.username.errors){
 
-            axios.post('/doesUsernameExists', {username: this.username.value}).then((response)=>{
+            axios.post('/doesUsernameExists', {_csrf: this._csrf, username: this.username.value}).then((response)=>{
                 if(response.data == true){
                     // if username exists
                     this.showValidationError(this.username, "Username is already taken.")
@@ -149,8 +151,8 @@ export default class RegistrationFrom{
 
     emailHandler(){
         this.email.errors = false
-        clearTimeout(this.email.time)
-        this.email.time = setTimeout(()=> this.emailAfterDelay(), 750)
+        clearTimeout(this.email.timer)
+        this.email.timer = setTimeout(()=> this.emailAfterDelay(), 750)
     }
 
     emailAfterDelay(){
@@ -160,8 +162,7 @@ export default class RegistrationFrom{
         }
         if (!this.email.errors){
             // check if email exits
-            axios.post('/doesEmailExists', {email: this.email.value}).then((response)=>{
-                console.log(response.data)
+            axios.post('/doesEmailExists', {_csrf: this._csrf, email: this.email.value}).then((response)=>{
                 // if email exists -- response.data is either true of false
                 if(response.data){
 
@@ -169,7 +170,7 @@ export default class RegistrationFrom{
                     this.showValidationError(this.email, "This email is already in used.")
                 }else{
                     // if email doesnt exists
-                    this.email.unique = true
+                    this.email.isUnique = true
                     this.hideValidationError(this.email)
 
                 }
