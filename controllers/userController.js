@@ -200,6 +200,21 @@ exports.profileFollowingScreen = async function(req, res){
 
     }
 }
+
+exports.doesUsernameExists = function(req, res){
+    // axios sending username
+    User.findByUsername(req.body.username).then(()=> {
+        res.json(true)}
+        ).catch(()=> {
+            res.json(false)
+        })
+
+}
+
+exports.doesEmailExists = async function (req, res){
+    let emailBool = await User.doesEmailExists(req.body.email)
+    res.json(emailBool)
+}
   
 
    

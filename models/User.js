@@ -180,4 +180,25 @@ User.findByUsername = function(username){
 
 }
 
+User.doesEmailExists = function(email){
+    return new Promise(async (resolve, reject)=>{
+        // check if email is type of string 
+        if (typeof(email) != "string"){
+            resolve(false)
+            return
+        }
+
+        try { 
+            let user = await userCollection.findOne({email: email})
+            console.log(user)
+             if (user) { resolve(true) } else { resolve(false) }
+
+        }catch(dbErr){
+            console.log(dbErr)
+            reject()
+
+        }
+    })    
+}
+
 module.exports = User

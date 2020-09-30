@@ -15,6 +15,8 @@ router.get('/', userController.home)
 router.post('/register', userController.register)
 router.post('/login', userController.login)
 router.post('/logout', userController.logout)
+router.post('/doesUsernameExists', userController.doesUsernameExists)
+router.post('/doesEmailExists', userController.doesEmailExists)
 
 // Post related routes
 // mustbeLoggedIn wil check for if user is logged in or no
@@ -39,7 +41,6 @@ router.post('/search', postController.search)
 // follow related routers
 
 router.post('/addFollow/:username', userController.mustBeLoggedIn, followController.addFollow)
-
 router.post('/removeFollow/:username', userController.mustBeLoggedIn, followController.removeFollow)
 
 
