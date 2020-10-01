@@ -13,9 +13,15 @@ const MongoStore = require('connect-mongo')(session)
 
 // import flash-messages
 const flash = require('connect-flash')
-const { response } = require('express')
+const app = express()
 
-let app = express()
+// boiler plate code -- this enables access data from html forms
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
+
+app.use('/api', require('./router-api'))
+
+
 
 // setting up sessions 
 let sessionOptions = session({
@@ -38,9 +44,6 @@ app.use(sessionOptions)
 // enable flash
 app.use(flash())
 
-// boiler plate code -- this enables access data from html forms
-app.use(express.urlencoded({ extended: false }))
-app.use(express.json())
 
 // access public folder - contains css
 app.use(express.static('public'))

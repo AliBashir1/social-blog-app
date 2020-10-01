@@ -1,3 +1,4 @@
+const { JsonWebTokenError } = require('jsonwebtoken')
 const Post = require('../models/Post')
 
 exports.viewCreateScreen = function (req, res){
@@ -117,4 +118,42 @@ exports.search = function(req, res){
     Post.search(req.body.searchTerm).then(posts => {
         res.json(posts)
     }).catch(()=> res.json([]))
+}
+
+/**
+ * 
+ *  API functions
+ */
+
+
+exports.apiCreatePost = function(req, res){
+    let post = new Post(req.body, req.apiUser._id)
+
+    post.create().then(function(id){
+        // this block will run if post is saved succesfully
+        res.json("Congrats")
+
+
+    }).catch(function(errors){
+        res.json(errors)
+     
+
+    })
+
+}
+
+
+
+exports.apiDelete = function(req, res){
+
+    // req.apiUser._id comes from apiMustBeLoggedIn functions
+    Post.delete(req.params.postid, req.apiUser._id).then(()=>{
+       
+        res.json("Success")
+
+    }).catch(()=> {
+        res.json("You do not have permission to perform this action.")
+
+    })
+
 }

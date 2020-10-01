@@ -3,6 +3,7 @@ const User = require('../models/User')
 const Post = require('../models/Post')
 const Follow = require('../models/Follow')
 const { ObjectID } = require('mongodb')
+const jwt = require('jsonwebtoken')
 
 
 exports.login = function(req, res){
@@ -217,5 +218,54 @@ exports.doesEmailExists = async function (req, res){
 }
   
 
-   
+/**
+ *  API Methods
+ * 
+ */
+exports.apiLogin = function(req, res){
 
+
+   let user = new User(req.body)
+   user.login().then( (result) => {
+        res.json(jwt.sign({_id: user.data._id}, process.env.JWTSECRET, {expiresIn: "30m"}))
+   }).catch( (e)=> {
+      res.json("You values are not correct")
+   })
+
+
+}
+
+
+exports.apiMustBeLoggedIn = function(req, res, next){
+    try{
+        // verify json load with secret keyword and return the user id
+        req.apiUser = jwt.verify(req.body.token, process.env.JWTSECRET)
+        next()
+
+    }catch{
+        res.json("You must provide valid token.")
+
+    }
+}
+
+exports.apiGetPostByUsername = async function(req, res){
+
+    try { 
+        let authorDoc = await User.findByUsername(req.params.username)
+        let posts = await Post.findByAuthorId(authorDoc._id)
+         posts = posts.map((post)=>{
+             post = {
+                 title: post.title, 
+                 body: post.body,
+                 authorUsername: post.author.username,
+                 postCreatedDate: post.createdDate,
+             }
+             return post
+
+         })
+
+         res.json(posts)
+    } catch {
+        res.json("Sorry, Invalid user requested")
+    }
+}
